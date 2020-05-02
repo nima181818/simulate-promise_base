@@ -1,0 +1,224 @@
+<html>
+<style>
+
+*{
+  margin:0;
+  padding:0
+}
+.tops{
+  width:100px;
+  height:100px;
+  background:rgba(255,255,0,0.5);
+
+  position:absolute;
+  left:0;
+  top:0;
+  
+}
+.container{
+  width:4480px;
+  position:absolute;
+  left:0;
+  top:0;
+  display:flex;
+  flex-wrap:wrap;
+}
+</style>
+<body>
+
+</div>
+<div class="container"></div>
+
+</body>
+	<script src="./map-border.json">
+		</script>
+<script>
+let id=-1;
+class Promises {
+	
+    constructor(f) {
+		this.id=(++id)
+        this.state = 'pending';
+		
+        this.tasklist = [];
+	
+        this.values = null
+        if (typeof f != 'function') {
+            throw new Error('arguments[0] must be a function')
+        }
+        this.stateChangewatch();
+        f(this.resolve.bind(this), this.reject.bind(this))
+
+    }
+    //状态改变检测
+    stateChangewatch() {
+
+        let that = this
+            let value='pending';
+        Object.defineProperty(this, 'state', {
+            set: function (v) {
+                value = v;
+                if (value == 'resolved') {
+                    that.toastThen(value)
+                } else {
+                    if (value == 'rejected') {
+                        that.toastThen(value)
+                    }
+                }
+            },
+            get: function () {
+                return value
+
+            }
+        })
+    }
+    toastThen(type) {
+	
+      if(type=='resolved'){
+		  
+		  for(let j=0;j<this.tasklist.length;j++){
+			  
+			  if(this.tasklist[j].type==type){
+				  
+				  this.tasklist[j](this.values);
+				  this.tasklist.splice(j,1);
+				  j--;
+			  }
+		  }
+	  }
+	  if(type=='rejected'){
+		  
+		  let hasthen=this.tasklist.find(item=>{return item.type=='resolved'}),
+		      hascatch = this.tasklist.find(item=>{return item.type=='rejected'});
+             console.log(hasthen?true:false,hascatch?true:false,1)
+		  for(let j=0;j<this.tasklist.length;j++){
+				
+					this.tasklist[j](this.values);
+					this.tasklist.splice(j,1);
+				  j--;
+				
+			}
+			console.log(hasthen?true:false,hascatch?true:false,2)
+			if((!hasthen)&&(!hascatch)){
+				
+				throw new Error('Uncatched (in mypromise)'+this.values+this.id)
+			}
+	  }
+		
+		  
+    }
+
+    resolve(value) {
+        setTimeout(() => {
+            this.values = value
+                this.state = 'resolved';
+
+        })
+    }
+    reject(value) {
+        setTimeout(() => {
+            this.values = value;
+            this.state = 'rejected';
+        })
+
+    }
+    catch (f) {
+	
+        let promise = new Promises(() => {});
+        let k = f;
+        f = null;
+        f = () => {
+          try{
+				
+			
+			if(this.state=='resolved'){
+				
+				 promise.resolve(this.values)
+			}
+            if(this.state=='rejected'){
+				debugger
+					let v = k(this.values);
+				 promise.resolve(v)
+			}
+			}catch(error){
+				
+				 promise.reject(error)
+			}
+
+        }
+        f.type = 'rejected';
+		
+		if(this.state=='pending'){
+		     this.tasklist.push(f)
+	   }else{
+		   if(this.state=='rejected'){
+			    f();
+			   
+		   }else{
+			   f.type='resolved'
+			    f();
+		   }
+		    
+	   }
+		
+         
+        return promise
+    }
+    then(f) {
+			
+        let promise = new Promises(() => {});
+        let k = f;
+        f = () => {
+			try{
+				
+			
+			if(this.state=='rejected'){
+				
+				 promise.reject(this.values)
+			}
+            if(this.state=='resolved'){
+					let v = k(this.values);
+				 promise.resolve(v)
+			}
+			}catch(error){
+				
+				 promise.reject(error)
+			}
+            
+        }
+       f.type='resolved';
+	   if(this.state=='pending'){
+		     this.tasklist.push(f)
+	   }else{
+		   if(this.state=='resolved'){
+			    f();
+			   
+		   }else{
+			   f.type='rejected'
+			 f();
+		   }
+		    
+	   }
+          
+       
+
+        return promise
+    }
+}
+let a = new Promises((res, rej) => {
+
+        setTimeout(() => {
+
+            rej(4444)
+        }, 300)
+    })
+   let b= a.catch(()=>{
+	  let k=k
+	   return 1
+   }).catch(e=>{
+	   return e
+   })
+   console.log(b)
+
+</script>
+</html>
